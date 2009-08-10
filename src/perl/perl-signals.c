@@ -24,6 +24,7 @@
 #include "signals.h"
 #include "commands.h"
 #include "servers.h"
+#include "recode.h"
 
 #include "perl-core.h"
 #include "perl-common.h"
@@ -225,6 +226,11 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
         void *arg;
 	int n;
 
+#define ARG_SET_UTF8(perl, c) do {   \
+    if(str_is_utf8((c), strlen(c)))  \
+        SvUTF8_on(perl);             \
+    } while(0)
+
 
 	ENTER;
 	SAVETMPS;
@@ -250,9 +256,14 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
 
 			ptr = arg;
 			for (tmp = *ptr; tmp != NULL; tmp = tmp->next) {
-				sv = is_iobject ? iobject_bless((SERVER_REC *) tmp->data) :
-					is_str ? new_pv(tmp->data) :
+				if (is_iobject)
+					sv = iobject_bless((SERVER_REC *) tmp->data);
+				else if (is_str) {
+					sv = new_pv(tmp->data);
+					ARG_SET_UTF8(sv, tmp->data);
+				} else
 					irssi_bless_plain(rec->args[n]+9, tmp->data);
+
 				av_push(av, sv);
 			}
 
@@ -261,9 +272,10 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
                         perlarg = newSViv((IV)arg);
                 else if (arg == NULL)
                         perlarg = &PL_sv_undef;
-                else if (strcmp(rec->args[n], "string") == 0)
+                else if (strcmp(rec->args[n], "string") == 0) {
                         perlarg = new_pv(arg);
-                else if (strcmp(rec->args[n], "ulongptr") == 0)
+                        ARG_SET_UTF8(perlarg, arg);
+                } else if (strcmp(rec->args[n], "ulongptr") == 0)
                         perlarg = newSViv(*(unsigned long *) arg);
                 else if (strcmp(rec->args[n], "intptr") == 0)
                         saved_args[n] = perlarg = newRV_noinc(newSViv(*(int *) arg));
