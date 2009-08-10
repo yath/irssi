@@ -87,12 +87,22 @@ static int str_is_ascii(const char *str)
 	return 1;
 }
 
+gboolean str_is_utf8(const char *str, size_t len) {
+	/* Only validate for UTF-8 if an 8-bit encoding. */
+	if (!str_is_ascii(str))
+		return g_utf8_validate(str, len, NULL);
+	else if (!strchr(str, '\e'))
+		return 1;
+
+	return 0;
+}
+
 char *recode_in(const SERVER_REC *server, const char *str, const char *target)
 {
 	const char *from = NULL;
 	const char *to = translit_charset;
 	char *recoded = NULL;
-	gboolean str_is_utf8, recode, autodetect;
+	gboolean is_str_utf8, recode, autodetect;
 	int len;
 
 	if (!str)
@@ -104,15 +114,10 @@ char *recode_in(const SERVER_REC *server, const char *str, const char *target)
 
 	len = strlen(str);
 
-	/* Only validate for UTF-8 if an 8-bit encoding. */
-	str_is_utf8 = 0;
-	if (!str_is_ascii(str))
-		str_is_utf8 = g_utf8_validate(str, len, NULL);
-	else if (!strchr(str, '\e'))
-		str_is_utf8 = 1;
+	is_str_utf8 = str_is_utf8(str, len);
 	autodetect = settings_get_bool("recode_autodetect_utf8");
 
-	if (autodetect && str_is_utf8)
+	if (autodetect && is_str_utf8)
 		if (term_is_utf8)
 			return g_strdup(str);
 		else
@@ -124,7 +129,7 @@ char *recode_in(const SERVER_REC *server, const char *str, const char *target)
 		recoded = g_convert_with_fallback(str, len, to, from, NULL, NULL, NULL, NULL);
 
 	if (!recoded) {
-		if (str_is_utf8)
+		if (is_str_utf8)
 			if (term_is_utf8)
 				return g_strdup(str);
 			else
