@@ -1,5 +1,7 @@
 #ifndef __PERL_COMMON_H
 #define __PERL_COMMON_H
+#include "recode.h"
+#include "settings.h"
 
 /* helper defines */
 #define new_pv(a) \
@@ -10,6 +12,13 @@
 
 #define hvref(o) \
 	(is_hvref(o) ? (HV *)SvRV(o) : NULL)
+
+#define PV_SET_UTF8(perl, c) do { \
+	if(settings_get_bool("recode_autodetect_utf8") && \
+			str_is_utf8((c), strlen(c))) \
+		SvUTF8_on(perl); \
+	} while(0)
+
 
 typedef void (*PERL_OBJECT_FUNC) (HV *hv, void *object);
 

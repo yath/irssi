@@ -24,8 +24,6 @@
 #include "signals.h"
 #include "commands.h"
 #include "servers.h"
-#include "recode.h"
-#include "settings.h"
 
 #include "perl-core.h"
 #include "perl-common.h"
@@ -227,12 +225,6 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
         void *arg;
 	int n;
 
-#define ARG_SET_UTF8(perl, c) do {                    \
-    if(settings_get_bool("recode_autodetect_utf8") && \
-       str_is_utf8((c), strlen(c)))                   \
-        SvUTF8_on(perl);                              \
-    } while(0)
-
 
 	ENTER;
 	SAVETMPS;
@@ -262,7 +254,7 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
 					sv = iobject_bless((SERVER_REC *) tmp->data);
 				else if (is_str) {
 					sv = new_pv(tmp->data);
-					ARG_SET_UTF8(sv, tmp->data);
+					PV_SET_UTF8(sv, tmp->data);
 				} else
 					irssi_bless_plain(rec->args[n]+9, tmp->data);
 
@@ -276,7 +268,7 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
                         perlarg = &PL_sv_undef;
                 else if (strcmp(rec->args[n], "string") == 0) {
                         perlarg = new_pv(arg);
-                        ARG_SET_UTF8(perlarg, arg);
+                        PV_SET_UTF8(perlarg, arg);
                 } else if (strcmp(rec->args[n], "ulongptr") == 0)
                         perlarg = newSViv(*(unsigned long *) arg);
                 else if (strcmp(rec->args[n], "intptr") == 0)
