@@ -25,6 +25,7 @@
 #include "core.h"
 #include "misc.h"
 #include "settings.h"
+#include "recode.h"
 
 #include "commands.h"
 #include "ignore.h"
@@ -89,6 +90,23 @@ SV *perl_func_sv_inc(SV *func, const char *package)
 	}
 
         return func;
+}
+
+SV *new_pv(const char *str) {
+    SV *pv;
+    gboolean do_utf8 = (settings_get_bool("recode") && 
+                        settings_get_bool("recode_autodetect_utf8"));
+    if (!str) {
+        pv = newSVpv("", 0);
+        if (do_utf8)
+            SvUTF8_on(pv);
+    } else {
+        int len = strlen(str);
+        pv = newSVpv(str, len);
+        if (do_utf8 && str_is_utf8(str, len))
+            SvUTF8_on(pv);
+    }
+    return pv;
 }
 
 static int magic_free_object(pTHX_ SV *sv, MAGIC *mg)

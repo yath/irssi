@@ -2,9 +2,6 @@
 #define __PERL_COMMON_H
 
 /* helper defines */
-#define new_pv(a) \
-	(newSVpv((a) == NULL ? "" : (a), (a) == NULL ? 0 : strlen(a)))
-
 #define is_hvref(o) \
 	((o) && SvROK(o) && SvRV(o) && (SvTYPE(SvRV(o)) == SVt_PVHV))
 
@@ -25,6 +22,8 @@ char *perl_function_get_package(const char *function);
 /* If SV is a string, prefix it with given package.
    Increases the reference counter for the return value. */
 SV *perl_func_sv_inc(SV *func, const char *package);
+/* Create a new SvPV */
+SV *new_pv(const char *str);
 
 #ifndef pTHX_
 #  define pTHX_
