@@ -25,6 +25,7 @@
 #include "commands.h"
 #include "servers.h"
 #include "recode.h"
+#include "settings.h"
 
 #include "perl-core.h"
 #include "perl-common.h"
@@ -226,9 +227,10 @@ static void perl_call_signal(PERL_SCRIPT_REC *script, SV *func,
         void *arg;
 	int n;
 
-#define ARG_SET_UTF8(perl, c) do {   \
-    if(str_is_utf8((c), strlen(c)))  \
-        SvUTF8_on(perl);             \
+#define ARG_SET_UTF8(perl, c) do {                    \
+    if(settings_get_bool("recode_autodetect_utf8") && \
+       str_is_utf8((c), strlen(c)))                   \
+        SvUTF8_on(perl);                              \
     } while(0)
 
 
